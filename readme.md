@@ -5,6 +5,7 @@
 
 ![Screenshot_47](https://github.com/mcnickbronx/week_timer/assets/17063709/0f5c4438-84ff-4c2d-9661-6436c75c0ccb)
 
+![Screenshot_48](https://github.com/mcnickbronx/week_timer/assets/17063709/28d60ed5-5457-48d2-bf6e-b5052ae1edad)
 
 ## Использование программы
 
