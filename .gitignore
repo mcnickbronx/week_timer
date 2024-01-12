@@ -4,3 +4,4 @@ venv
 .venv
 settings_local.py
 settings.ini
+.db

@@ -7,6 +7,9 @@ import os
 import requests
 import datetime
 import configparser
+import os
+
+from db import *
 
 config = configparser.ConfigParser()  # создаём объекта парсера
 config.read("settings.ini")
@@ -16,7 +19,10 @@ ID_USER = config["Config"]["ID_USER"]
 
 icon = None  # Глобальный icon
 stop = False  # Признак глобальной остановки
+work_timer = False
+TIME_STEP = 5 # шаг основного цикла
 
+check_and_create_db()
 
 def set_icon(time):
     time = f'{time:02}'
@@ -32,7 +38,11 @@ def set_icon(time):
 
 
 def unset_icon():
-    image_path = os.path.join(os.getcwd(), "src", "ico1.png")
+    print('w',work_timer)
+    if work_timer:
+        image_path = os.path.join(os.getcwd(), "src", "ico2.png")
+    else:
+        image_path = os.path.join(os.getcwd(), "src", "ico1.png")
     image = Image.open(image_path)
     # image = Image.new('RGB', (64, 64), '#eee')
     icon.icon = image
@@ -41,8 +51,17 @@ def unset_icon():
 
 def creat_menu(mess):
     # создаст объект меню с заголовком сообщения
+    if work_timer:
+        mess_work = "Выкл. таймер раб. дня"
+    else:
+        mess_work = "Вкл. таймер раб. дня"
+    message2 = f'Рабочий день: {get_duration_and_convert()}'
     menu = pystray.Menu(
         pystray.MenuItem(mess, after_click),
+        # pystray.MenuItem(message2, after_click),
+
+        pystray.MenuItem(mess_work, after_click),
+
         pystray.MenuItem("Выход", after_click))
     return menu
 
@@ -61,8 +80,15 @@ def send_notify(message, title):
 
 def after_click(self, query):
     global stop
-    if str(query) == "":
-        pass
+    global work_timer
+    if str(query) == "Вкл. таймер раб. дня":
+        work_timer = True
+        print('Вкл. таймер')
+        unset_icon()
+    elif str(query) == "Выкл. таймер раб. дня":
+        work_timer = False
+        print('Выкл. таймер')
+        unset_icon()
     elif str(query) == "Выход":
         stop = True
         icon.stop()
@@ -126,14 +152,18 @@ def start_week():
 
     tasks_init, time_all_tikets = get_ticket_time()
 
-    message = f'За день: {to_time(time_all_tikets)}'
+    message = f'За день: {to_time(time_all_tikets)} | р.д. {get_duration_and_convert()}'
+
     update_title(message)
     # unset_icon()
 
     i_not_change = 0
     is_start_timer = False
     while stop == False:
-        time.sleep(5)
+        time.sleep(TIME_STEP)
+        if work_timer:
+            add_or_update_timer(TIME_STEP)
+
         tasks_curent, time_all_tikets = get_ticket_time()
 
         if tasks_curent:
@@ -161,15 +191,15 @@ def start_week():
                         #     "Запуск задачи!")
                         is_start_timer = True
 
-                    message = f"За день: {to_time(time_all_tikets)}"
+                    message = f"За день: {to_time(time_all_tikets)} | {task['title']} | р.д. {get_duration_and_convert()}"
                     # message = f"За день: {to_time(time_all_tikets)} Всего: {to_time(task['time_all'])} Таймер: {to_time(task['time'])}"
                     update_title(message)
 
-            if count_change > 1:
-                print('Внимание! Несколько таймеров!')
-                message = f"Внимание! Запущено {count_change} задач."
-                update_title(message)
-                send_notify(message)
+            # if count_change > 1:
+            #     print('Внимание! Несколько таймеров!')
+            #     message = f"Внимание! Запущено {count_change} задач."
+            #     update_title(message)
+            #     send_notify(message)
 
             if is_change:
                 i_not_change = 0
@@ -179,8 +209,8 @@ def start_week():
             print(f'{i_not_change=}')
 
             if i_not_change > 12:
-                # message = f'За день: {to_time(time_all_tikets)}'
-                # update_title(message)
+                message = f"За день: {to_time(time_all_tikets)} | р.д. {get_duration_and_convert()}"
+                update_title(message)
 
                 if is_start_timer:
                     unset_icon()
