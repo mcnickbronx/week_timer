@@ -142,6 +142,7 @@ def end_timer_session(start, end):
 
     start_date = start.strftime("%d.%m.%Y")
     end_date = end.strftime("%d.%m.%Y")
+
     end_time = end.strftime("%H:%M:%S")
 
     # Проверяем, заканчивается ли сессия в тот же день, что и началась
@@ -153,6 +154,9 @@ def end_timer_session(start, end):
         # Если сессия заканчивается в другой день, создаем новую запись
         c.execute("INSERT INTO timer_history (timer_date, start_time, end_time) VALUES (?, ?, ?)",
                   (end_date, '00:00:00', end_time))
+
+        c.execute("UPDATE timer_history SET end_time = ? WHERE timer_date = ? AND start_time = ?",
+                  ('23:59:59', start_date, start.strftime("%H:%M:%S")))
 
     conn.commit()
     conn.close()
