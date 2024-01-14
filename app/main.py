@@ -127,8 +127,10 @@ def get_ticket_time():
             time_count_all += time_count
 
             date = datetime.datetime.strptime(w["date"], "%d.%m.%Y").date()
+
             if date == datetime.date.today():
                 time_all_tikets_i += time_count
+                print(f"{date} / {task['title']} {time_count}")
 
         task_item = {'title': task['title'], 'time': time_count, 'time_all': time_count_all}
         # tasks_append[task['id']] = task_item
@@ -159,10 +161,17 @@ def start_week():
 
     i_not_change = 0
     is_start_timer = False
+    cur_task = '' # текущий таск
     while stop == False:
         time.sleep(TIME_STEP)
         if work_timer:
             add_or_update_timer(TIME_STEP)
+
+        message = f"За день: {to_time(time_all_tikets)} | {cur_task} | р.д. {get_duration_and_convert()}"
+        if i_not_change > 12 or cur_task == '':
+            message = f"За день: {to_time(time_all_tikets)} | р.д. {get_duration_and_convert()}"
+
+        update_title(message)
 
         tasks_curent, time_all_tikets = get_ticket_time()
 
@@ -190,7 +199,7 @@ def start_week():
                         #     f"{task['title']} \n ------------ \n Всего за день: {to_time(time_all_tikets)} \n Всего по задаче: {to_time(task['time_all'])}",
                         #     "Запуск задачи!")
                         is_start_timer = True
-
+                    cur_task = task['title']
                     message = f"За день: {to_time(time_all_tikets)} | {task['title']} | р.д. {get_duration_and_convert()}"
                     # message = f"За день: {to_time(time_all_tikets)} Всего: {to_time(task['time_all'])} Таймер: {to_time(task['time'])}"
                     update_title(message)
