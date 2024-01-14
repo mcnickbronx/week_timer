@@ -10,23 +10,36 @@ def get_today_date():
 
 def check_and_create_db(db_name='data.db'):
     db_path = os.path.join(os.getcwd(), "src", "data.db")
-    if not os.path.exists(db_path):
-        # Если файла нет, создаем его и добавляем таблицу
-        conn = sqlite3.connect(db_path)
-        c = conn.cursor()
-        # Создание таблицы с первичным ключом - сегодняшней датой
-        c.execute('''
-            CREATE TABLE IF NOT EXISTS timer (
-                date TEXT PRIMARY KEY,
-                duration INTEGER
-            )
-        ''')
-        conn.commit()
-        conn.close()
-        print(f"База данных '{db_path}' создана.")
-    else:
-        print(f"База данных '{db_path}' уже существует.")
 
+    # Если файла нет, создаем его и добавляем таблицу
+    conn = sqlite3.connect(db_path)
+    c = conn.cursor()
+    # Создание таблицы с первичным ключом - сегодняшней датой
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS timer (
+            date TEXT PRIMARY KEY,
+            duration INTEGER,
+            time TEXT
+        )
+    ''')
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS timer_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timer_date TEXT,
+            start_time TEXT,
+            end_time TEXT,
+            FOREIGN KEY(timer_date) REFERENCES timer(date)
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
+def sec_to_time(duration):
+    hours = duration // 3600
+    minutes = (duration % 3600) // 60
+    seconds = duration % 60
+    time = f'{hours}:{minutes}:{seconds}'
+    return time
 
 # Функция для добавления или обновления записи таймера
 def add_or_update_timer(duration):
@@ -42,12 +55,16 @@ def add_or_update_timer(duration):
         # Если запись существует, прибавляем duration к существующему значению и обновляем запись
         current_duration = result[0]
         new_duration = current_duration + duration
-        c.execute("UPDATE timer SET duration = ? WHERE date = ?",
-                  (new_duration, date))
+
+        time = sec_to_time(new_duration)
+
+        c.execute("UPDATE timer SET duration = ?, time = ? WHERE date = ?",
+                  (new_duration, time, date))
     else:
+        time = sec_to_time(duration)
         # Если записи нет, добавляем новую
-        c.execute("INSERT INTO timer (date, duration) VALUES (?, ?)",
-                  (date, duration))
+        c.execute("INSERT INTO timer (date, duration, time) VALUES (?, ?, ?)",
+                  (date, duration, time))
     conn.commit()
 
 
@@ -67,10 +84,75 @@ def get_duration_and_convert():
 
     if result:
         duration_in_seconds = result[0]
-        # Конвертируем секунды в часы, минуты и секунды
+        # Конвертируем секунды в часы, минуты
         hours = duration_in_seconds // 3600
         minutes = (duration_in_seconds % 3600) // 60
-        seconds = duration_in_seconds % 60
         return f'{hours}:{minutes:02}'
     else:
         return '...'
+
+
+def add_timer_history(start, end):
+    # Подключаемся к базе данных
+    db_path = os.path.join(os.getcwd(), "src", "data.db")
+    conn = sqlite3.connect(db_path)
+    c = conn.cursor()
+
+    # Получаем дату начала и окончания
+    start_date = start.strftime("%Y%m%d")
+    end_date = end.strftime("%Y%m%d")
+
+    if start_date == end_date:
+        # Если даты совпадают, добавляем одну запись
+        c.execute("INSERT INTO timer_history (timer_date, start_time, end_time) VALUES (?, ?, ?)",
+                  (start_date, start.strftime("%H:%M:%S"), end.strftime("%H:%M:%S")))
+    else:
+        # Если даты различаются, добавляем две записи
+        # Первая запись до полуночи первого дня
+        c.execute("INSERT INTO timer_history (timer_date, start_time, end_time) VALUES (?, ?, ?)",
+                  (start_date, start.strftime("%H:%M:%S"), '23:59:59'))
+        # Вторая запись начиная с полуночи следующего дня
+        c.execute("INSERT INTO timer_history (timer_date, start_time, end_time) VALUES (?, ?, ?)",
+                  (end_date, '00:00:00', end.strftime("%H:%M:%S")))
+
+    conn.commit()
+    conn.close()
+
+
+def start_timer_session(start):
+    db_path = os.path.join(os.getcwd(), "src", "data.db")
+    conn = sqlite3.connect(db_path)
+    c = conn.cursor()
+
+    start_date = start.strftime("%d.%m.%Y")
+    start_time = start.strftime("%H:%M:%S")
+
+    # Вставляем начальное время, предполагая, что end_time будет добавлен позже
+    c.execute("INSERT INTO timer_history (timer_date, start_time) VALUES (?, ?)",
+              (start_date, start_time))
+
+    conn.commit()
+    conn.close()
+
+
+def end_timer_session(start, end):
+    db_path = os.path.join(os.getcwd(), "src", "data.db")
+    conn = sqlite3.connect(db_path)
+    c = conn.cursor()
+
+    start_date = start.strftime("%d.%m.%Y")
+    end_date = end.strftime("%d.%m.%Y")
+    end_time = end.strftime("%H:%M:%S")
+
+    # Проверяем, заканчивается ли сессия в тот же день, что и началась
+    if start_date == end_date:
+        # Обновляем запись, добавляя end_time
+        c.execute("UPDATE timer_history SET end_time = ? WHERE timer_date = ? AND start_time = ?",
+                  (end_time, start_date, start.strftime("%H:%M:%S")))
+    else:
+        # Если сессия заканчивается в другой день, создаем новую запись
+        c.execute("INSERT INTO timer_history (timer_date, start_time, end_time) VALUES (?, ?, ?)",
+                  (end_date, '00:00:00', end_time))
+
+    conn.commit()
+    conn.close()

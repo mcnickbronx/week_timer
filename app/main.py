@@ -19,8 +19,11 @@ ID_USER = config["Config"]["ID_USER"]
 
 icon = None  # Глобальный icon
 stop = False  # Признак глобальной остановки
+
 work_timer = False
 TIME_STEP = 5 # шаг основного цикла
+start_time_work = None
+end_time_work = None
 
 check_and_create_db()
 
@@ -81,15 +84,26 @@ def send_notify(message, title):
 def after_click(self, query):
     global stop
     global work_timer
+    global start_time_work
+    global end_time_work
     if str(query) == "Вкл. таймер раб. дня":
         work_timer = True
         print('Вкл. таймер')
+        start_time_work = datetime.datetime.now()
+        start_timer_session(start_time_work)
         unset_icon()
     elif str(query) == "Выкл. таймер раб. дня":
         work_timer = False
         print('Выкл. таймер')
+        end_time_work = datetime.datetime.now()
+        end_timer_session(start_time_work, end_time_work)
         unset_icon()
     elif str(query) == "Выход":
+        if work_timer:
+            work_timer = False
+            end_time_work = datetime.datetime.now()
+            end_timer_session(start_time_work, end_time_work)
+
         stop = True
         icon.stop()
 
