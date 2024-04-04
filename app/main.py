@@ -35,7 +35,10 @@ def set_icon(time):
     # img_draw.rectangle((70, 50, 270, 200), outline='red', fill='blue')
     font_path = os.path.join(os.getcwd(), "src", "Roboto-Bold.ttf")
     font = ImageFont.truetype(font_path, 55)
-    img_draw.text((2, 2), time, fill='orange', font=font)
+    if work_timer:
+        img_draw.text((2, 2), time, fill='orange', font=font)
+    else:
+        img_draw.text((2, 2), time, fill='green', font=font)
     icon.icon = blank_image
     # blank_image.save('sample-out.png')
 
@@ -139,8 +142,8 @@ def get_ticket_time():
         for w in task['workloads']:
             time_count = int(w['duration'])  # Заберу последнюю
             time_count_all += time_count
-
-            date = datetime.datetime.strptime(w["date"], "%d.%m.%Y").date()
+            print(w["date"])
+            date = datetime.datetime.strptime(w["date"], "%Y-%m-%d").date()
 
             if date == datetime.date.today():
                 time_all_tikets_i += time_count
