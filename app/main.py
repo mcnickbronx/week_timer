@@ -58,6 +58,9 @@ def after_click(self, query):
 
 # Основная программа
 def start_week():
+    '''
+    Основной цикл проверки включенных счетчиков.
+    '''
     try:
         time.sleep(2)
         print(icon)
@@ -70,7 +73,6 @@ def start_week():
 
         message = f'За день: {to_time(time_all_tikets)}'
         update_title(message)
-        # unset_icon()
 
         i_not_change = 0
         is_start_timer = False
@@ -130,7 +132,6 @@ def start_icon():
     global icon
     image_path = os.path.join(os.getcwd(), "src", "ico1.png")
     image = Image.open(image_path)
-    # image = Image.new('RGB', (64, 64), '#eee')
     menu = creat_menu('Старт!')
     icon = pystray.Icon("WeekTimer", image, "Timer", menu=menu)
 
