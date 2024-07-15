@@ -105,14 +105,14 @@ def start_week():
                         if not is_start_timer:
                             is_start_timer = True
 
-                        message = f"За день: {to_time(time_all_tikets)}"
+                        message = f"{task['title']} | За день: {to_time(time_all_tikets)}"
                         update_title(message)
 
                 if count_change > 1:
                     print('Внимание! Несколько таймеров!')
                     message = f"Внимание! Запущено {count_change} задач."
                     update_title(message)
-                    send_notify(message)
+                    # send_notify(message)
 
                 if is_change:
                     i_not_change = 0
@@ -128,7 +128,7 @@ def start_week():
                     is_start_timer = False
             else:
                 update_title('Сбой апи! Новая попытка...')
-                send_notify(f"Сбой апи!", "Внимание!")
+                # send_notify(f"Сбой апи!", "Внимание!")
 
     except Exception as e:
         print(e)
