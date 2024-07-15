@@ -1,4 +1,5 @@
 import requests
+from requests.exceptions import Timeout
 import datetime
 import configparser
 
@@ -14,14 +15,24 @@ def to_time(time):
 
 
 def get_ticket_time():
+    '''
+    Обращение ко всем апи пространств из конфига Week
+    :return:
+    tasks_curent - текущий счетчик времени
+    time_all_tikets - сумма за день
+    Если возвращается [], 0 - есть ошибка
+    '''
     tasks = []
     for api_key in API_KEYS:
-
         headers = {
             'authorization': 'Bearer ' + api_key,
         }
-
-        response = requests.get(f'https://api.weeek.net/public/v1/tm/tasks?userId={ID_USER}&perPage=500', headers=headers)
+        try:
+            response = requests.get(f'https://api.weeek.net/public/v1/tm/tasks?userId={ID_USER}&perPage=500', headers=headers)
+        except Exception as e:
+            print(e)
+            print("Запрос прошел с ошибкой")
+            return ([], 0)
 
         if response.status_code == 200:
             tasks += response.json()['tasks']

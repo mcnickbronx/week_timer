@@ -27,6 +27,12 @@ def unset_icon():
     icon.icon = image
 
 
+def err_icon():
+    image_path = os.path.join(os.getcwd(), "src", "ico3.png")
+    image = Image.open(image_path)
+    icon.icon = image
+
+
 def creat_menu(mess):
     # создаст объект меню с заголовком сообщения
     menu = pystray.Menu(
@@ -126,6 +132,7 @@ def start_week():
 
     except Exception as e:
         print(e)
+        err_icon()
         update_title('Ошибка, смотрите консоль')
 
 def start_icon():
